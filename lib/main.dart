@@ -1,17 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_grid_button/flutter_grid_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum MathOperator {
-  plus,
-  minus,
-  multiply,
-  divide
-}
+enum MathOperator { add, minus, multiply, divide, none }
 
-final leftOperandReferenceProvider = StateProvider((ref) => 0);
-final rightOperandReferenceProvider = StateProvider((ref) => 0);
-final operatorReferenceProvider = StateProvider((ref) => MathOperator);
+final leftOperandReferenceProvider = StateProvider((ref) => -1);
+final rightOperandReferenceProvider = StateProvider((ref) => -1);
+final operatorReferenceProvider = StateProvider((ref) => MathOperator.none);
 
 void main() {
   runApp(
@@ -50,6 +46,7 @@ class Home extends ConsumerWidget {
               borderWidth: 2,
               onPressed: (dynamic val) {
                 _focusNode.requestFocus();
+                rememberValueTapped(val, ref);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(val.toString()),
@@ -113,5 +110,85 @@ class Home extends ConsumerWidget {
         }),
       ),
     );
+  }
+
+  int? getNumeric(String input) {
+    String source = input.trim();
+    return int.tryParse(source);
+  }
+
+  printToConsole(String str) {
+    if (kDebugMode) {
+      print(str);
+    }
+  }
+
+  void doMathOperation(WidgetRef ref) {
+    int rightOperand = ref.read(rightOperandReferenceProvider.notifier).state;
+    int leftOperand = ref.read(leftOperandReferenceProvider.notifier).state;
+    MathOperator op = ref.read(operatorReferenceProvider.notifier).state;
+    if(rightOperand == -1 || leftOperand == -1 || op == MathOperator.none) {
+      printToConsole("Both operands are -1. Or Operator is none. Nothing to do.");
+      return; 
+    }
+    switch (op) {
+      case MathOperator.multiply:
+        printToConsole("leftOperand ($leftOperand) * rightOperand ($rightOperand) = ${leftOperand * rightOperand}");
+        break;
+      case MathOperator.divide:
+        printToConsole("leftOperand ($leftOperand) / rightOperand ($rightOperand) = ${leftOperand / rightOperand}");
+        break;
+      case MathOperator.add:
+        printToConsole("leftOperand ($leftOperand) + rightOperand ($rightOperand) = ${leftOperand + rightOperand}");
+        break;
+      case MathOperator.minus:
+        printToConsole("leftOperand ($leftOperand) - rightOperand ($rightOperand) = ${leftOperand - rightOperand}");
+        break;
+      default:
+    }
+    ref.read(rightOperandReferenceProvider.notifier).state = -1;
+    ref.read(leftOperandReferenceProvider.notifier).state = -1;
+    ref.read(operatorReferenceProvider.notifier).state = MathOperator.none;
+  }
+
+  void rememberValueTapped(String valueTapped, WidgetRef ref) {
+    int? numberTapped = getNumeric(valueTapped);
+    if (numberTapped == null) {
+      switch (valueTapped) {
+        case 'x':
+          ref.read(operatorReferenceProvider.notifier).state =
+              MathOperator.multiply;
+          break;
+        case '/':
+          ref.read(operatorReferenceProvider.notifier).state =
+              MathOperator.divide;
+          break;
+        case '-':
+          ref.read(operatorReferenceProvider.notifier).state =
+              MathOperator.minus;
+          break;
+        case '+':
+          ref.read(operatorReferenceProvider.notifier).state = MathOperator.add;
+          break;
+        case '=':
+          doMathOperation(ref);
+          ref.read(operatorReferenceProvider.notifier).state = MathOperator.none;
+          break;
+
+        default:
+          ref.read(operatorReferenceProvider.notifier).state =
+              MathOperator.none;
+          break;
+      }
+    } else {
+      
+      int leftOperand = ref.read(leftOperandReferenceProvider.notifier).state;
+      if(leftOperand == -1) {
+        ref.read(leftOperandReferenceProvider.notifier).state = numberTapped;
+      } else {
+        ref.read(rightOperandReferenceProvider.notifier).state = numberTapped;
+      }
+      
+    } 
   }
 }
