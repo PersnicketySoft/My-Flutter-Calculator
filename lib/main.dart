@@ -8,6 +8,7 @@ enum MathOperator { add, minus, multiply, divide, none }
 final leftOperandReferenceProvider = StateProvider((ref) => -1);
 final rightOperandReferenceProvider = StateProvider((ref) => -1);
 final operatorReferenceProvider = StateProvider((ref) => MathOperator.none);
+final solutionReferenceProvider = StateProvider((ref) => "");
 
 void main() {
   runApp(
@@ -29,8 +30,11 @@ class Home extends ConsumerWidget {
   Home({super.key});
   final _focusNode = FocusNode(canRequestFocus: false, skipTraversal: true);
 
+  Text answerText = Text("");
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    printToConsole('$this: Build');
     const textStyle = TextStyle(fontSize: 26);
     return MaterialApp(
       home: Scaffold(
@@ -69,10 +73,7 @@ class Home extends ConsumerWidget {
                 ],
                 [
                   GridButtonItem(
-                      child: const Icon(
-                        Icons.image_outlined,
-                        size: 50,
-                      ),
+                      title: ref.watch(solutionReferenceProvider),
                       focusNode: _focusNode,
                       textStyle: textStyle.copyWith(color: Colors.white),
                       value: 'image',
@@ -84,7 +85,7 @@ class Home extends ConsumerWidget {
                   const GridButtonItem(title: "7"),
                   const GridButtonItem(title: "8"),
                   const GridButtonItem(title: "9"),
-                  GridButtonItem(title: "×", color: Colors.grey[300]),
+                  GridButtonItem(title: "x", color: Colors.grey[300]),
                 ],
                 [
                   const GridButtonItem(title: "4"),
@@ -131,21 +132,27 @@ class Home extends ConsumerWidget {
       printToConsole("Both operands are -1. Or Operator is none. Nothing to do.");
       return; 
     }
+    String answerString = "";
     switch (op) {
       case MathOperator.multiply:
+        answerString = "$leftOperand * $rightOperand = ${leftOperand * rightOperand}";
         printToConsole("leftOperand ($leftOperand) * rightOperand ($rightOperand) = ${leftOperand * rightOperand}");
         break;
       case MathOperator.divide:
+        answerString = "$leftOperand / $rightOperand = ${leftOperand / rightOperand}";
         printToConsole("leftOperand ($leftOperand) / rightOperand ($rightOperand) = ${leftOperand / rightOperand}");
         break;
       case MathOperator.add:
+        answerString = "$leftOperand + $rightOperand = ${leftOperand + rightOperand}";
         printToConsole("leftOperand ($leftOperand) + rightOperand ($rightOperand) = ${leftOperand + rightOperand}");
         break;
       case MathOperator.minus:
+        answerString = "$leftOperand - $rightOperand = ${leftOperand - rightOperand}";
         printToConsole("leftOperand ($leftOperand) - rightOperand ($rightOperand) = ${leftOperand - rightOperand}");
         break;
       default:
     }
+    ref.read(solutionReferenceProvider.notifier).state = answerString;
     ref.read(rightOperandReferenceProvider.notifier).state = -1;
     ref.read(leftOperandReferenceProvider.notifier).state = -1;
     ref.read(operatorReferenceProvider.notifier).state = MathOperator.none;
@@ -153,24 +160,25 @@ class Home extends ConsumerWidget {
 
   void rememberValueTapped(String valueTapped, WidgetRef ref) {
     int? numberTapped = getNumeric(valueTapped);
+
     if (numberTapped == null) {
       switch (valueTapped) {
-        case 'x':
+        case "x":
           ref.read(operatorReferenceProvider.notifier).state =
               MathOperator.multiply;
           break;
-        case '/':
+        case "/":
           ref.read(operatorReferenceProvider.notifier).state =
               MathOperator.divide;
           break;
-        case '-':
+        case "-":
           ref.read(operatorReferenceProvider.notifier).state =
               MathOperator.minus;
           break;
-        case '+':
+        case "+":
           ref.read(operatorReferenceProvider.notifier).state = MathOperator.add;
           break;
-        case '=':
+        case "=":
           doMathOperation(ref);
           ref.read(operatorReferenceProvider.notifier).state = MathOperator.none;
           break;
