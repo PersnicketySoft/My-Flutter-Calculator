@@ -10,6 +10,7 @@ final rightOperandReferenceProvider = StateProvider((ref) => -1);
 final operatorReferenceProvider = StateProvider((ref) => MathOperator.none);
 final solutionReferenceProvider = StateProvider((ref) => "");
 
+
 void main() {
   runApp(
     // Adding ProviderScope enables Riverpod for the entire project
@@ -125,13 +126,11 @@ class Home extends ConsumerWidget {
   }
 
   void doMathOperation(WidgetRef ref) {
+
     int rightOperand = ref.read(rightOperandReferenceProvider.notifier).state;
     int leftOperand = ref.read(leftOperandReferenceProvider.notifier).state;
     MathOperator op = ref.read(operatorReferenceProvider.notifier).state;
-    if(rightOperand == -1 || leftOperand == -1 || op == MathOperator.none) {
-      printToConsole("Both operands are -1. Or Operator is none. Nothing to do.");
-      return; 
-    }
+    
     String answerString = "";
     switch (op) {
       case MathOperator.multiply:
@@ -150,6 +149,9 @@ class Home extends ConsumerWidget {
         answerString = "$leftOperand - $rightOperand = ${leftOperand - rightOperand}";
         printToConsole("leftOperand ($leftOperand) - rightOperand ($rightOperand) = ${leftOperand - rightOperand}");
         break;
+      case MathOperator.none:
+        printToConsole("MathOperator.none");
+        return;
       default:
     }
     ref.read(solutionReferenceProvider.notifier).state = answerString;
@@ -159,6 +161,7 @@ class Home extends ConsumerWidget {
   }
 
   void rememberValueTapped(String valueTapped, WidgetRef ref) {
+    MathOperator op = ref.read(operatorReferenceProvider.notifier).state;
     int? numberTapped = getNumeric(valueTapped);
 
     if (numberTapped == null) {
@@ -184,17 +187,27 @@ class Home extends ConsumerWidget {
           break;
 
         default:
-          ref.read(operatorReferenceProvider.notifier).state =
-              MathOperator.none;
+          ref.read(operatorReferenceProvider.notifier).state = MathOperator.none;
           break;
       }
     } else {
-      
-      int leftOperand = ref.read(leftOperandReferenceProvider.notifier).state;
-      if(leftOperand == -1) {
-        ref.read(leftOperandReferenceProvider.notifier).state = numberTapped;
+      int prevValue=0;
+      if(op == MathOperator.none) {
+        prevValue = ref.read(leftOperandReferenceProvider.notifier).state;
+        if(prevValue != -1) {
+          String newValue = "$prevValue$numberTapped";
+          ref.read(leftOperandReferenceProvider.notifier).state = int.parse(newValue);
+        } else {
+          ref.read(leftOperandReferenceProvider.notifier).state = numberTapped;
+        }
       } else {
-        ref.read(rightOperandReferenceProvider.notifier).state = numberTapped;
+        prevValue = ref.read(rightOperandReferenceProvider.notifier).state;
+        if(prevValue != -1) {
+          String newValue = "$prevValue$numberTapped";
+          ref.read(rightOperandReferenceProvider.notifier).state = int.parse(newValue);
+        } else {
+          ref.read(rightOperandReferenceProvider.notifier).state = numberTapped;
+        }
       }
       
     } 
